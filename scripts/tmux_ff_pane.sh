@@ -4,6 +4,16 @@ if ! command -v fzf-tmux &> /dev/null; then
     return
 fi
 
+tmux_popup_available() {
+    local version
+    version=$(tmux -V | cut -d ' ' -f2)
+
+    # shellcheck disable=SC2072
+    [[ "$version" < "3.2" ]] && return 1
+
+    return 0
+}
+
 tmux_panes() {
     local window_name_width
     window_name_width=$(tmux list-panes -s -F '#W' | wc -L)
@@ -22,8 +32,15 @@ tmux_panes() {
 }
 
 fzf_tmux_select_pane() {
+    local fzfcmd
+    if tmux_popup_available; then
+        fzfcmd="fzf-tmux -p --"
+    else
+        fzfcmd="fzf-tmux"
+    fi
+
     local selected
-    selected=$(cat | fzf-tmux --ansi --no-sort)
+    selected=$(cat | $fzfcmd --ansi --no-sort)
 
     [[ -z "$selected" ]] && return
 
